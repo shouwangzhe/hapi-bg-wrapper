@@ -3,13 +3,48 @@
 ## 前置要求
 
 - macOS / Linux
-- Node.js 18+
 - tmux
-- HAPI CLI (`npm install -g @twsxtd/hapi`)
 
 ## 安装步骤
 
-### 1. 安装 HAPI CLI
+### 1. 安装 tmux
+
+**macOS**:
+```bash
+brew install tmux
+```
+
+**Linux (Ubuntu/Debian)**:
+```bash
+sudo apt-get install tmux
+```
+
+**CentOS 7**:
+```bash
+sudo yum install -y tmux
+```
+
+### 2. 安装 nvm (Node Version Manager)
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```
+
+重新加载 shell 配置：
+```bash
+source ~/.zshrc  # macOS
+# 或
+source ~/.bashrc  # Linux
+```
+
+### 3. 安装 Node.js
+
+```bash
+nvm install 18
+nvm use 18
+```
+
+### 4. 安装 HAPI CLI
 
 ```bash
 npm install -g @twsxtd/hapi
@@ -130,6 +165,60 @@ EOF
 
 echo "✓ Configuration added to $SHELL_RC"
 echo "Run: source $SHELL_RC"
+```
+
+## CentOS 7 一键安装脚本
+
+如果你在 CentOS 7 上安装，可以使用以下完整脚本：
+
+```bash
+#!/bin/bash
+# CentOS 7 一键安装脚本
+
+# 1. 安装 tmux
+sudo yum install -y tmux
+
+# 2. 安装 nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# 3. 加载 nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# 4. 安装 Node.js
+nvm install 18
+nvm use 18
+
+# 5. 安装 HAPI CLI
+npm install -g @twsxtd/hapi
+
+# 6. 配置环境变量和函数
+cat >> ~/.bashrc << 'EOF'
+
+# HAPI 配置
+export HAPI_API_URL="http://your-hapi-server:8300"
+export CLI_API_TOKEN="your-cli-api-token"
+
+# HAPI 后台启动函数
+hapi-bg() {
+  local session_name="hapi-$(date +%s)"
+  local full_cmd="export HAPI_API_URL='$HAPI_API_URL' && export CLI_API_TOKEN='$CLI_API_TOKEN' && IS_SANDBOX=1 hapi --permission-mode bypassPermissions"
+
+  if [[ "$1" == "resume" && -n "$2" ]]; then
+    full_cmd="$full_cmd --resume $2"
+    session_name="hapi-$2"
+  fi
+
+  tmux new-session -d -s "$session_name" "$full_cmd"
+  echo "✓ Started in tmux session: $session_name"
+  echo "  Attach: tmux attach -t $session_name"
+  echo "  HAPI URL: $HAPI_API_URL"
+}
+EOF
+
+echo "✓ 安装完成！"
+echo "请编辑 ~/.bashrc 修改 HAPI_API_URL 和 CLI_API_TOKEN"
+echo "然后运行: source ~/.bashrc"
 ```
 
 ## 下一步
